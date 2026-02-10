@@ -4,6 +4,7 @@ import GameScene from './components/GameScene'
 import { FPSMonitor } from './components/FPSMonitor'
 import { StatusDisplay } from './components/StatusDisplay'
 import { GameEngine } from './engine/GameEngine'
+import { testDeterministicSimulation } from './engine/test'
 
 // Locked isometric camera component
 function LockedCamera() {
@@ -31,6 +32,11 @@ export default function App() {
 
   useEffect(() => {
     gameEngine.start()
+    
+    console.log('[App] mounted — starting GameEngine')
+    // Run deterministic simulation test (logs to browser console)
+    testDeterministicSimulation()
+    
     return () => gameEngine.stop()
   }, [gameEngine])
 
@@ -48,9 +54,10 @@ export default function App() {
       >
         <LockedCamera />
         <GameScene engine={gameEngine} />
-        <FPSMonitor />
-        <StatusDisplay />
       </Canvas>
+      <FPSMonitor />
+      <StatusDisplay engine={gameEngine} />
+      <div style={{position: 'fixed', bottom: 12, left: 12, color: '#fff', fontFamily: 'sans-serif', background: 'rgba(0,0,0,0.4)', padding: '6px 8px', borderRadius: 4}}>Scene running — if canvas is blank, check browser console.</div>
     </div>
   )
 }

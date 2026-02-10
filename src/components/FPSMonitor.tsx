@@ -1,4 +1,3 @@
-import { useFrame } from '@react-three/fiber'
 import { useRef, useState } from 'react'
 
 export function FPSMonitor() {
@@ -6,15 +5,29 @@ export function FPSMonitor() {
   const frameCountRef = useRef(0)
   const lastTimeRef = useRef(performance.now())
 
-  useFrame(() => {
-    frameCountRef.current++
-    const now = performance.now()
-    const elapsed = now - lastTimeRef.current
+  // Poll frame count via RAF
+  useState(() => {
+    let rafId: number
+    const countFrames = () => {
+      frameCountRef.current++
+      rafId = requestAnimationFrame(countFrames)
+    }
+    rafId = requestAnimationFrame(countFrames)
 
-    if (elapsed >= 1000) {
-      setFps(Math.round((frameCountRef.current * 1000) / elapsed))
-      frameCountRef.current = 0
-      lastTimeRef.current = now
+    // Update FPS display every 1 second
+    const interval = setInterval(() => {
+      const now = performance.now()
+      const elapsed = now - lastTimeRef.current
+      if (elapsed >= 1000) {
+        setFps(Math.round((frameCountRef.current * 1000) / elapsed))
+        frameCountRef.current = 0
+        lastTimeRef.current = now
+      }
+    }, 100)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      clearInterval(interval)
     }
   })
 
@@ -30,7 +43,8 @@ export function FPSMonitor() {
       padding: '8px 12px',
       borderRadius: 4,
       zIndex: 100,
-      border: '1px solid #00ff00'
+      border: '1px solid #00ff00',
+      pointerEvents: 'none'
     }}>
       FPS: {fps}
     </div>

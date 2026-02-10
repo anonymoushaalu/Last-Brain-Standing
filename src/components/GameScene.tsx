@@ -1,5 +1,6 @@
 import { useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
+import { Rook } from './Rook'
 import type { GameEngine } from '../engine/GameEngine'
 
 interface GameSceneProps {
@@ -8,15 +9,36 @@ interface GameSceneProps {
 
 export default function GameScene({ engine }: GameSceneProps) {
   const lightRef = useRef(null)
+  const [damageState, setDamageState] = useState<'intact' | 'cracked' | 'heavily_damaged'>('intact')
+  const [currentHealth, setCurrentHealth] = useState(100)
+  
+  // Debug mount
+  useEffect(() => {
+    console.log('[GameScene] mounted — engine tick:', engine.getTick())
+  }, [engine])
 
   useFrame(() => {
     engine.tick()
   })
 
+  // Cycle through damage states for demo
+  useFrame(({ clock }) => {
+    const elapsed = clock.elapsedTime
+    if (elapsed > 10 && currentHealth > 50) {
+      setCurrentHealth(50)
+      setDamageState('cracked')
+    }
+    if (elapsed > 20 && currentHealth > 20) {
+      setCurrentHealth(20)
+      setDamageState('heavily_damaged')
+    }
+    if (elapsed > 30 && currentHealth > 0) {
+      setCurrentHealth(0)
+    }
+  })
+
   return (
     <>
-      {/* Locked isometric camera handled by parent Canvas */}
-      
       {/* Lighting */}
       <ambientLight intensity={0.5} color="#ffffff" />
       <directionalLight
@@ -43,11 +65,13 @@ export default function GameScene({ engine }: GameSceneProps) {
       {/* Grid for visual reference */}
       <gridHelper args={[100, 20, '#444444', '#222222']} position={[0, 0, 0]} />
 
-      {/* Center marker - small cube to verify center */}
-      <mesh position={[0, 1, 0]} castShadow>
-        <boxGeometry args={[2, 2, 2]} />
-        <meshStandardMaterial color="#ff6b6b" />
-      </mesh>
+      {/* Hero Rook with Brain */}
+      <Rook
+        position={[0, 0, 0]}
+        maxHealth={100}
+        currentHealth={currentHealth}
+        damageState={damageState}
+      />
     </>
   )
 }
