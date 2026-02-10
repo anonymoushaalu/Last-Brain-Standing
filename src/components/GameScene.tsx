@@ -15,24 +15,39 @@ export default function GameScene({ engine }: GameSceneProps) {
 
   return (
     <>
+      {/* Locked isometric camera handled by parent Canvas */}
+      
       {/* Lighting */}
-      <ambientLight intensity={0.6} />
+      <ambientLight intensity={0.5} color="#ffffff" />
       <directionalLight
         ref={lightRef}
-        position={[50, 50, 50]}
-        intensity={1}
+        position={[40, 40, 40]}
+        intensity={1.2}
+        color="#ffffff"
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-camera-far={200}
-        shadow-camera-left={-100}
-        shadow-camera-right={100}
-        shadow-camera-top={100}
-        shadow-camera-bottom={-100}
+        shadow-camera-left={-80}
+        shadow-camera-right={80}
+        shadow-camera-top={80}
+        shadow-camera-bottom={-80}
         castShadow
       />
 
-      {/* Game world - TODO: Add game entities */}
-      <gridHelper args={[100, 10]} />
+      {/* Ground Plane */}
+      <mesh position={[0, -0.5, 0]} receiveShadow>
+        <planeGeometry args={[100, 100]} />
+        <meshStandardMaterial color="#2a5d3a" metalness={0.1} roughness={0.8} />
+      </mesh>
+
+      {/* Grid for visual reference */}
+      <gridHelper args={[100, 20, '#444444', '#222222']} position={[0, 0, 0]} />
+
+      {/* Center marker - small cube to verify center */}
+      <mesh position={[0, 1, 0]} castShadow>
+        <boxGeometry args={[2, 2, 2]} />
+        <meshStandardMaterial color="#ff6b6b" />
+      </mesh>
     </>
   )
 }

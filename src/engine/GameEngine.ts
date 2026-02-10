@@ -1,7 +1,7 @@
 import seedrandom from 'seedrandom'
 
 export class GameEngine {
-  private rng: seedrandom.PRNG
+  private rng: () => number
   private tickRate = 10 // ticks per second
   private dt = 1 / this.tickRate // 0.1 seconds per tick
   private currentTick = 0
@@ -50,7 +50,7 @@ export class GameEngine {
     return this.currentTick
   }
 
-  getRNG(): seedrandom.PRNG {
+  getRNG(): () => number {
     return this.rng
   }
 

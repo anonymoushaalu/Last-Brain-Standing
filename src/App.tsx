@@ -1,10 +1,33 @@
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { useEffect, useState } from 'react'
 import GameScene from './components/GameScene'
+import { FPSMonitor } from './components/FPSMonitor'
+import { StatusDisplay } from './components/StatusDisplay'
 import { GameEngine } from './engine/GameEngine'
 
+// Locked isometric camera component
+function LockedCamera() {
+  const { camera } = useThree()
+  
+  useEffect(() => {
+    // Isometric view: ~45° angle, orthographic feel
+    // Camera height and distance create the tilted perspective
+    const distance = 50
+    const angle = Math.PI / 4 // 45 degrees
+    
+    camera.position.x = distance * Math.cos(angle)
+    camera.position.y = distance * Math.sin(angle)
+    camera.position.z = distance * Math.cos(angle)
+    
+    camera.lookAt(0, 0, 0)
+    camera.updateProjectionMatrix()
+  }, [camera])
+
+  return null
+}
+
 export default function App() {
-  const [gameEngine] = useState(() => new GameEngine(seed = Math.random()))
+  const [gameEngine] = useState(() => new GameEngine(Math.random()))
 
   useEffect(() => {
     gameEngine.start()
@@ -15,14 +38,18 @@ export default function App() {
     <div style={{ width: '100%', height: '100vh', margin: 0, padding: 0 }}>
       <Canvas
         camera={{
-          position: [0, 30, 30],
+          position: [35.36, 35.36, 35.36],
           fov: 50,
           near: 0.1,
-          far: 10000
+          far: 1000
         }}
         shadows
+        dpr={Math.min(window.devicePixelRatio, 2)}
       >
+        <LockedCamera />
         <GameScene engine={gameEngine} />
+        <FPSMonitor />
+        <StatusDisplay />
       </Canvas>
     </div>
   )
