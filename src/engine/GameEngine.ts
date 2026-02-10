@@ -20,14 +20,22 @@ export interface DamageEvent {
   duration: number
 }
 
+export interface ReplayData {
+  seed: string | number
+  duration: number // How long the battle lasted
+  finalRookHp: number
+}
+
 export class GameEngine {
   private rng: () => number
+  private originalSeed: string | number
   private tickRate = 10 // ticks per second
   private dt = 1 / this.tickRate // 0.1 seconds per tick
   private currentTick = 0
   private isRunning = false
   private accumulator = 0
   private lastTime = 0
+  private isReplaying = false
 
   // Entities
   private rook: Rook | null = null
@@ -46,11 +54,13 @@ export class GameEngine {
   private zombiesSpawned = 0
   private arrowId = 0
   private damageEventId = 0
+  private replayData: ReplayData | null = null
 
   // Debug/logging
   private simulationLog: string[] = []
 
   constructor(seed: string | number) {
+    this.originalSeed = seed
     this.rng = seedrandom(String(seed))
   }
 
@@ -74,6 +84,14 @@ export class GameEngine {
 
   stop() {
     this.isRunning = false
+    // Capture replay data for future replays
+    if (!this.isReplaying) {
+      this.replayData = {
+        seed: this.originalSeed,
+        duration: this.currentTick / this.tickRate,
+        finalRookHp: this.rook?.hp ?? 0,
+      }
+    }
     this.printLog()
   }
 
@@ -338,6 +356,44 @@ export class GameEngine {
 
   setTimeScale(scale: number) {
     this.timeScale = Math.max(0, Math.min(1, scale))
+  }
+
+  getReplayData(): ReplayData | null {
+    return this.replayData
+  }
+
+  replay() {
+    // Reset everything for replay
+    this.currentTick = 0
+    this.isReplaying = true
+    this.isRunning = false
+    this.accumulator = 0
+    this.timeScale = 1
+    this.waveNumber = 0
+    this.zombiesSpawned = 0
+    this.arrowId = 0
+    this.damageEventId = 0
+    this.lastDamageTime = 0
+
+    // Clear entities
+    this.zombies = []
+    this.archers = []
+    this.arrows = []
+    this.damageEvents = []
+    this.simulationLog = []
+
+    // Re-initialize engine with same seed
+    this.rng = seedrandom(String(this.originalSeed))
+
+    // Re-init rook and archers
+    this.rook = new Rook('rook-0', 100, { x: 0, y: 0, z: 0 }, 0)
+    this.spawnArcher([5, 0, 5], 0)
+    this.spawnArcher([5, 0, -5], 0)
+    this.spawnArcher([-5, 0, 5], 0)
+
+    this.isRunning = true
+    this.lastTime = performance.now()
+    this.isReplaying = false
   }
 
   get entities() {
