@@ -1,22 +1,20 @@
 /**
  * Devvit Integration Layer
  * Handles communication with Reddit/Devvit servers
+ * Uses localStorage for demo (production uses Devvit backend)
  */
 
-interface RookPostData {
-  rook_id: string
+interface RookState {
   brain_value: number
   fastest_collapse: number
-  total_attacks: number
   leaderboard: Array<{
     player: string
     time_survived: number
     damage_dealt: number
-    rank: number
   }>
 }
 
-interface AttackSubmission {
+interface AttackPayload {
   player_name: string
   wave_config: string
   time_survived: number
@@ -26,118 +24,79 @@ interface AttackSubmission {
 
 export class DevvitApi {
   private postId: string
-  private baseUrl: string = process.env.REACT_APP_DEVVIT_API_URL || 'http://localhost:3000'
+  private storageKey: string
 
   constructor(postId: string) {
     this.postId = postId
+    this.storageKey = `rook-${postId}-state`
   }
 
   /**
-   * Fetch current rook state from post
+   * Get current rook state (uses localStorage in demo mode)
    */
-  async getRookState(): Promise<RookPostData> {
+  async getRookState(): Promise<RookState> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/rooks/${this.postId}`)
-      if (!response.ok) throw new Error('Failed to fetch rook state')
-      return response.json()
-    } catch (error) {
-      console.error('[DevvitApi] Error fetching rook state:', error)
-      // Return mock data for demo
-      return {
-        rook_id: this.postId,
-        brain_value: 0,
-        fastest_collapse: Infinity,
-        total_attacks: 0,
-        leaderboard: [],
+      const stored = localStorage.getItem(this.storageKey)
+      if (stored) {
+        return JSON.parse(stored)
       }
+    } catch (e) {
+      console.warn('[DevvitApi] Failed to read rook state from storage:', e)
+    }
+
+    // Return default empty state
+    return {
+      brain_value: 0,
+      fastest_collapse: Infinity,
+      leaderboard: [],
     }
   }
 
   /**
-   * Submit a siege attack result
+   * Submit an attack and update leaderboard
    */
-  async submitAttack(attack: AttackSubmission): Promise<void> {
+  async submitAttack(attack: AttackPayload): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/rooks/${this.postId}/attack`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(attack),
+      const state = await this.getRookState()
+
+      // Add to leaderboard
+      state.leaderboard.push({
+        player: attack.player_name,
+        time_survived: attack.time_survived,
+        damage_dealt: attack.damage_dealt,
       })
-      if (!response.ok) throw new Error('Failed to submit attack')
-      console.log('[DevvitApi] Attack submitted successfully')
+
+      // Sort by damage dealt (descending)
+      state.leaderboard.sort((a, b) => b.damage_dealt - a.damage_dealt)
+
+      // Keep only top 50
+      state.leaderboard = state.leaderboard.slice(0, 50)
+
+      // Update fastest collapse time (if rook was defeated)
+      if (attack.damage_dealt === 100) {
+        state.fastest_collapse = Math.min(state.fastest_collapse, attack.time_survived)
+      }
+
+      // Update brain value
+      state.brain_value += attack.damage_dealt
+
+      // Save updated state
+      localStorage.setItem(this.storageKey, JSON.stringify(state))
+
+      console.log('[DevvitApi] Attack submitted and recorded locally:', attack)
     } catch (error) {
       console.error('[DevvitApi] Error submitting attack:', error)
-      // In demo mode, just log success
-      console.log('[DevvitApi] Attack recorded locally:', attack)
     }
   }
-
   /**
-   * Get replay data for a specific attack
+   * Clear all data for this rook (testing utility)
    */
-  async getReplay(replaySeed: string | number): Promise<any> {
+  async clearAllData(): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/replays/${replaySeed}`)
-      if (!response.ok) throw new Error('Failed to fetch replay')
-      return response.json()
-    } catch (error) {
-      console.error('[DevvitApi] Error fetching replay:', error)
-      return null
+      localStorage.removeItem(this.storageKey)
+      console.log('[DevvitApi] Cleared all data for post:', this.postId)
+    } catch (e) {
+      console.error('[DevvitApi] Failed to clear data:', e)
     }
   }
-
-  /**
-   * Update post content with latest leaderboard
-   */
-  async updatePostContent(content: string): Promise<void> {
-    try {
-      const response = await fetch(`${this.baseUrl}/api/rooks/${this.postId}/content`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
-      })
-      if (!response.ok) throw new Error('Failed to update post')
-    } catch (error) {
-      console.error('[DevvitApi] Error updating post:', error)
-    }
-  }
-}
-
-/**
- * Generate Reddit post content with leaderboard
- */
-export function generatePostContent(data: RookPostData): string {
-  const leaderboardText = data.leaderboard
-    .slice(0, 10)
-    .map(
-      (entry, i) =>
-        `${i + 1}. **${entry.player}** - ${entry.time_survived.toFixed(1)}s (${entry.damage_dealt} damage)`
-    )
-    .join('\n')
-
-  return `
-# 🧠 LAST BRAIN STANDING
-
-A rook defends its precious brain from endless zombie waves.
-
-## 💊 Current Brain Value
-**${data.brain_value}** infection points
-
-## ⚡ Fastest Collapse
-${data.fastest_collapse === Infinity ? 'Challenge not yet defeated' : `${data.fastest_collapse.toFixed(1)}s`}
-
-## 🎮 How to Play
-- Add zombie waves below (Runner, Tank, Spitter, Horde)
-- Watch the siege unfold with deterministic simulation
-- Submit your best attempt
-
-## 🏆 Leaderboard (Top 10)
-${leaderboardText || 'No attacks yet. Be the first!'}
-
-## ▶ WATCH REPLAYS
-Click the replay button after each battle to watch the siege again with the same result (deterministic magic!)
-
----
-*Powered by seeded RNG determinism. Every attack plays out the same way.*
-`
 }
