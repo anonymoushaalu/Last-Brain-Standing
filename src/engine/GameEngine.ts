@@ -12,6 +12,14 @@ export interface Arrow {
   speed: number // units per second
 }
 
+export interface DamageEvent {
+  id: string
+  position: Vector3
+  amount: number
+  time: number
+  duration: number
+}
+
 export class GameEngine {
   private rng: () => number
   private tickRate = 10 // ticks per second
@@ -27,11 +35,17 @@ export class GameEngine {
   private archers: Archer[] = []
   private arrows: Arrow[] = []
 
+  // Effects
+  private damageEvents: DamageEvent[] = []
+  private timeScale: number = 1 // For slow-mo effects
+  private lastDamageTime: number = 0
+
   // Simulation configuration
   private waveNumber = 0
   private ticksToSpawn = 50
   private zombiesSpawned = 0
   private arrowId = 0
+  private damageEventId = 0
 
   // Debug/logging
   private simulationLog: string[] = []
@@ -70,13 +84,25 @@ export class GameEngine {
     const deltaTime = (now - this.lastTime) / 1000 // Convert to seconds
     this.lastTime = now
 
+    // Apply time scale (for slow-mo effects)
+    const scaledDeltaTime = deltaTime * this.timeScale
+
+    // Decay timeScale back to 1 over time
+    if (this.timeScale < 1) {
+      this.timeScale = Math.min(1, this.timeScale + deltaTime * 2) // Recover at 2x speed
+    }
+
     // Fixed timestep loop
-    this.accumulator += deltaTime
+    this.accumulator += scaledDeltaTime
     while (this.accumulator >= this.dt) {
       this.fixedUpdate()
       this.accumulator -= this.dt
       this.currentTick++
     }
+
+    // Clean up old damage events
+    const now_ms = performance.now()
+    this.damageEvents = this.damageEvents.filter((e) => now_ms - e.time < e.duration * 1000)
   }
 
   private fixedUpdate() {
@@ -128,6 +154,15 @@ export class GameEngine {
         const target = this.zombies.find((z) => z.id === arrow.targetId)
         if (target && target.alive) {
           target.takeDamage(arrow.damage)
+          // Create damage event for floating number
+          this.damageEvents.push({
+            id: `dmg-${this.damageEventId++}`,
+            position: { ...target.position },
+            amount: arrow.damage,
+            time: performance.now(),
+            duration: 0.8,
+          })
+          this.lastDamageTime = performance.now()
           this.log(
             `[Tick ${this.currentTick}] Arrow ${arrow.id} hits ${target.id} for ${arrow.damage.toFixed(1)} dmg`
           )
@@ -143,9 +178,19 @@ export class GameEngine {
         if (!zombie.alive) continue
         const dist = zombie.distanceTo(this.rook.position)
         if (dist <= zombie.attackRange) {
-          this.rook.takeDamage(zombie.dps * this.dt)
+          const dmg = zombie.dps * this.dt
+          this.rook.takeDamage(dmg)
+          // Create damage event for rook damage
+          this.damageEvents.push({
+            id: `dmg-${this.damageEventId++}`,
+            position: { ...this.rook.position },
+            amount: dmg,
+            time: performance.now(),
+            duration: 0.8,
+          })
+          this.lastDamageTime = performance.now()
           this.log(
-            `[Tick ${this.currentTick}] Zombie ${zombie.id} hits Rook for ${(zombie.dps * this.dt).toFixed(1)} dmg (Rook HP: ${this.rook.hp.toFixed(1)})`
+            `[Tick ${this.currentTick}] Zombie ${zombie.id} hits Rook for ${dmg.toFixed(1)} dmg (Rook HP: ${this.rook.hp.toFixed(1)})`
           )
         }
       }
@@ -157,6 +202,7 @@ export class GameEngine {
     // Check win/loss conditions
     if (this.rook && !this.rook.alive) {
       this.log(`[Tick ${this.currentTick}] 🔴 ROOK DEFEATED`)
+      this.timeScale = 0.3 // Slow-mo on death
       this.stop()
     }
 
@@ -276,6 +322,22 @@ export class GameEngine {
 
   getArrows(): Arrow[] {
     return this.arrows
+  }
+
+  getDamageEvents(): DamageEvent[] {
+    return this.damageEvents
+  }
+
+  getLastDamageTime(): number {
+    return this.lastDamageTime
+  }
+
+  getTimeScale(): number {
+    return this.timeScale
+  }
+
+  setTimeScale(scale: number) {
+    this.timeScale = Math.max(0, Math.min(1, scale))
   }
 
   get entities() {
