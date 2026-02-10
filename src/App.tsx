@@ -32,6 +32,9 @@ function LockedCamera() {
 
 export default function App() {
   const [gameEngine] = useState(() => new GameEngine(Math.random()))
+  const [mode, setMode] = useState<'attacker' | 'defender'>('defender')
+  const [zombieSkin, setZombieSkin] = useState<string>('default')
+  const [rookSkin, setRookSkin] = useState<string>('default')
 
   useEffect(() => {
     gameEngine.start()
@@ -56,13 +59,15 @@ export default function App() {
         dpr={Math.min(window.devicePixelRatio, 2)}
       >
         <LockedCamera />
-        <GameScene engine={gameEngine} />
+        <GameScene engine={gameEngine} zombieSkin={zombieSkin} rookSkin={rookSkin} />
       </Canvas>
       <FPSMonitor />
       <StatusDisplay engine={gameEngine} />
-      <AttackerUI />
+      <AttackerUI engine={gameEngine} mode={mode} onModeChange={(m) => setMode(m)} zombieSkin={zombieSkin} setZombieSkin={setZombieSkin} rookSkin={rookSkin} setRookSkin={setRookSkin} />
       <ReplayButton engine={gameEngine} />
       <LeaderboardUI engine={gameEngine} postId="rook-0" />
+      {/* Tiny mode indicator */}
+      <div style={{position: 'fixed', top: 12, right: 12, color: '#fff', fontFamily: 'sans-serif', background: 'rgba(0,0,0,0.4)', padding: '6px 8px', borderRadius: 4}}>{mode === 'defender' ? 'Mode: Defender' : 'Mode: Attacker'}</div>
       <div style={{position: 'fixed', bottom: 12, left: 12, color: '#fff', fontFamily: 'sans-serif', background: 'rgba(0,0,0,0.4)', padding: '6px 8px', borderRadius: 4}}>Last Brain Standing</div>
     </div>
   )

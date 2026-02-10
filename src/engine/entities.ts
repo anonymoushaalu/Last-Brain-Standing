@@ -58,9 +58,11 @@ export abstract class Entity {
  */
 export class Rook extends Entity {
   level: number = 1
+  skin?: string
 
-  constructor(id: string, maxHp: number, position: Vector3, createdTick: number) {
+  constructor(id: string, maxHp: number, position: Vector3, createdTick: number, skin: string = 'default') {
     super(id, 'rook', maxHp, position, createdTick)
+    this.skin = skin
   }
 }
 
@@ -74,6 +76,7 @@ export class Zombie extends Entity {
   dps: number // damage per second
   cost: number // infection points cost
   isHordeMini: boolean = false // true if this is a mini zombie from a horde pack
+  skin?: string
 
   constructor(
     id: string,
@@ -124,6 +127,7 @@ export class Zombie extends Entity {
     }
 
     super(id, 'zombie', maxHp, position, createdTick)
+    this.skin = 'default'
     this.zombieType = zombieType
     this.speed = speed
     this.dps = dps

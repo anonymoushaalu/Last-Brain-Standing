@@ -5,6 +5,7 @@ import { Zombie } from '../engine/entities'
 
 interface ZombieRendererProps {
   zombies: Zombie[]
+  skinVariant?: string
 }
 
 const ZOMBIE_COLOR_MAP: Record<string, string> = {
@@ -16,7 +17,22 @@ const ZOMBIE_COLOR_MAP: Record<string, string> = {
 
 type InstancedMeshMap = Record<string, THREE.InstancedMesh | null>
 
-export const ZombieRenderer: React.FC<ZombieRendererProps> = ({ zombies }) => {
+const DEFAULT_SKIN_COLORS: Record<string, Record<string, string>> = {
+  default: {
+    runner: '#7FD300',
+    tank: '#FF6B00',
+    spitter: '#C700FF',
+    horde: '#00B4D8',
+  },
+  plague: {
+    runner: '#274E13',
+    tank: '#6B2F00',
+    spitter: '#5E1E4A',
+    horde: '#003E4D',
+  },
+}
+
+export const ZombieRenderer: React.FC<ZombieRendererProps> = ({ zombies, skinVariant = 'default' }) => {
   const { scene } = useThree()
   const instancedMeshesRef = useRef<InstancedMeshMap>({
     runner: null,
@@ -42,27 +58,31 @@ export const ZombieRenderer: React.FC<ZombieRendererProps> = ({ zombies }) => {
     ]
 
     types.forEach((type) => {
-      if (!instancedMeshesRef.current[type]) {
-        const material = new THREE.MeshStandardMaterial({
-          color: ZOMBIE_COLOR_MAP[type],
-          metalness: 0.5,
-          roughness: 0.4,
-          emissive: ZOMBIE_COLOR_MAP[type],
-          emissiveIntensity: 0.3,
-        })
-        const mesh = new THREE.InstancedMesh(geometries[type], material, 256) // Max 256 per type
-        mesh.castShadow = true
-        mesh.receiveShadow = true
-        mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
-        scene.add(mesh)
-        instancedMeshesRef.current[type] = mesh
+      // Dispose existing if present (skin change)
+      if (instancedMeshesRef.current[type]) {
+        scene.remove(instancedMeshesRef.current[type]!)
+        instancedMeshesRef.current[type] = null
       }
+      const color = (DEFAULT_SKIN_COLORS[skinVariant] || DEFAULT_SKIN_COLORS.default)[type]
+      const material = new THREE.MeshStandardMaterial({
+        color,
+        metalness: 0.5,
+        roughness: 0.4,
+        emissive: color,
+        emissiveIntensity: 0.25,
+      })
+      const mesh = new THREE.InstancedMesh(geometries[type], material, 256) // Max 256 per type
+      mesh.castShadow = true
+      mesh.receiveShadow = true
+      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
+      scene.add(mesh)
+      instancedMeshesRef.current[type] = mesh
     })
 
     return () => {
       // Cleanup handled by scene removal
     }
-  }, [scene])
+  }, [scene, skinVariant])
 
   // Update instance transforms and visibility every frame
   useFrame(() => {

@@ -10,9 +10,12 @@ import type { GameEngine } from '../engine/GameEngine'
 
 interface GameSceneProps {
   engine: GameEngine
+  zombieSkin?: string
+  rookSkin?: string
+  builderSkin?: string
 }
 
-export default function GameScene({ engine }: GameSceneProps) {
+export default function GameScene({ engine, zombieSkin = 'default', rookSkin = 'default', builderSkin = 'default' }: GameSceneProps) {
   const lightRef = useRef(null)
   const [damageState, setDamageState] = useState<'intact' | 'cracked' | 'heavily_damaged'>('intact')
   const [currentHealth, setCurrentHealth] = useState(100)
@@ -84,10 +87,11 @@ export default function GameScene({ engine }: GameSceneProps) {
         maxHealth={100}
         currentHealth={currentHealth}
         damageState={damageState}
+        skin={rookSkin}
       />
 
       {/* Zombie Renderer - InstancedMesh for all zombies */}
-      <ZombieRenderer zombies={engine.entities.filter((e) => e.type === 'zombie')} />
+      <ZombieRenderer zombies={engine.entities.filter((e) => e.type === 'zombie')} skinVariant={zombieSkin} />
 
       {/* Archer Units */}
       <ArcherVisuals archers={engine.getArchers()} />

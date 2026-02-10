@@ -7,6 +7,7 @@ export interface RookProps {
   maxHealth?: number
   currentHealth?: number
   damageState?: 'intact' | 'cracked' | 'heavily_damaged'
+  skin?: string
 }
 
 /**
@@ -17,7 +18,8 @@ export function Rook({
   position = [0, 0, 0],
   maxHealth = 100,
   currentHealth = 100,
-  damageState = 'intact'
+  damageState = 'intact',
+  skin = 'default',
 }: RookProps) {
   const groupRef = useRef<THREE.Group>(null)
   const brainRef = useRef<THREE.Mesh>(null)
@@ -30,13 +32,19 @@ export function Rook({
 
   // Get base color based on damage
   const getBaseColor = () => {
+    const skinColors: Record<string, { intact: string; cracked: string; heavy: string }> = {
+      default: { intact: '#8B5A3C', cracked: '#5A3E2B', heavy: '#3D2817' },
+      stone: { intact: '#6E7B8B', cracked: '#556572', heavy: '#37414a' },
+      iron: { intact: '#5C5C66', cracked: '#47474f', heavy: '#2f2f35' },
+    }
+    const colors = skinColors[skin ?? 'default'] || skinColors.default
     switch (damageState) {
       case 'intact':
-        return '#8B5A3C'
+        return colors.intact
       case 'cracked':
-        return '#5A3E2B'
+        return colors.cracked
       case 'heavily_damaged':
-        return '#3D2817'
+        return colors.heavy
     }
   }
 

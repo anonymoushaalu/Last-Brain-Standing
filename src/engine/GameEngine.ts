@@ -50,6 +50,8 @@ export class GameEngine {
 
   // Simulation configuration
   private waveNumber = 0
+  private spawnRingMin = 25
+  private spawnRingMax = 35
   private ticksToSpawn = 50
   private zombiesSpawned = 0
   private arrowId = 0
@@ -280,7 +282,8 @@ export class GameEngine {
   private spawnZombie(
     position: [number, number, number],
     type: 'runner' | 'tank' | 'spitter' | 'horde',
-    isHordeMini: boolean = false
+    isHordeMini: boolean = false,
+    skin: string = 'default'
   ) {
     const id = `z-${this.zombies.length + 1}`
     const zombie = new Zombie(
@@ -290,7 +293,22 @@ export class GameEngine {
       this.currentTick,
       isHordeMini
     )
+    zombie.skin = skin
     this.zombies.push(zombie)
+  }
+
+  // Public API: spawn a custom wave (used by attacker mode)
+  spawnCustomWave(types: Array<'runner' | 'tank' | 'spitter' | 'horde'>, skin: string = 'default') {
+    if (!this.rook) return
+    for (const t of types) {
+      const angle = this.rng() * Math.PI * 2
+      const dist = this.spawnRingMin + this.rng() * (this.spawnRingMax - this.spawnRingMin)
+      const x = this.rook.position.x + Math.cos(angle) * dist
+      const z = this.rook.position.z + Math.sin(angle) * dist
+      this.spawnZombie([x, 0, z], t, false, skin)
+      this.zombiesSpawned++
+    }
+    this.log(`[Tick ${this.currentTick}] Custom wave spawned (${types.length} units) skin=${skin}`)
   }
 
   private spawnArcher(position: [number, number, number], tick: number) {

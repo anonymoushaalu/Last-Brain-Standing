@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { GameEngine } from '../engine/GameEngine'
 
 interface ZombieType {
   id: 'runner' | 'tank' | 'spitter' | 'horde'
@@ -17,7 +18,17 @@ const ZOMBIE_TYPES: ZombieType[] = [
 
 const TOTAL_BUDGET = 120
 
-export const AttackerUI: React.FC = () => {
+interface AttackerUIProps {
+  engine?: GameEngine
+  mode?: 'attacker' | 'defender'
+  onModeChange?: (m: 'attacker' | 'defender') => void
+  zombieSkin?: string
+  setZombieSkin?: (s: string) => void
+  rookSkin?: string
+  setRookSkin?: (s: string) => void
+}
+
+export const AttackerUI: React.FC<AttackerUIProps> = ({ engine, mode = 'defender', onModeChange, zombieSkin = 'default', setZombieSkin, rookSkin = 'default', setRookSkin }) => {
   const [wave, setWave] = useState<Array<'runner' | 'tank' | 'spitter' | 'horde'>>([])
   const [isExpanded, setIsExpanded] = useState(true)
 
@@ -38,7 +49,10 @@ export const AttackerUI: React.FC = () => {
   const submitWave = () => {
     if (wave.length === 0) return
     console.log('[UI] Submitted wave:', wave)
-    // TODO: Send to backend/engine
+    // If engine provided and in attacker mode, spawn directly
+    if (engine && mode === 'attacker' && engine.spawnCustomWave) {
+      engine.spawnCustomWave(wave, zombieSkin)
+    }
     setWave([])
   }
 
@@ -75,6 +89,10 @@ export const AttackerUI: React.FC = () => {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <span>⚔️ SIEGE BUILDER {isExpanded ? '▼' : '▶'}</span>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={(e) => { e.stopPropagation(); onModeChange && onModeChange('defender') }} style={{ padding: '6px 8px', background: mode === 'defender' ? '#2E7D32' : '#333', color: '#fff', borderRadius: 4, border: 'none' }}>Defend</button>
+          <button onClick={(e) => { e.stopPropagation(); onModeChange && onModeChange('attacker') }} style={{ padding: '6px 8px', background: mode === 'attacker' ? '#B71C1C' : '#333', color: '#fff', borderRadius: 4, border: 'none' }}>Attack</button>
+        </div>
       </div>
 
       {isExpanded && (
@@ -120,6 +138,22 @@ export const AttackerUI: React.FC = () => {
                 {type.icon} {type.name} ({type.cost} pts)
               </button>
             ))}
+          </div>
+
+          {/* Skin selectors */}
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '11px', marginBottom: 6 }}>Zombie Skin:</div>
+            <select value={zombieSkin} onChange={(e) => setZombieSkin && setZombieSkin(e.target.value)} style={{ width: '100%', padding: 6, marginBottom: 8 }}>
+              <option value="default">Default</option>
+              <option value="plague">Plague</option>
+            </select>
+
+            <div style={{ fontSize: '11px', marginBottom: 6 }}>Rook Skin:</div>
+            <select value={rookSkin} onChange={(e) => setRookSkin && setRookSkin(e.target.value)} style={{ width: '100%', padding: 6 }}>
+              <option value="default">Default</option>
+              <option value="stone">Stone</option>
+              <option value="iron">Iron</option>
+            </select>
           </div>
 
           {/* Wave Preview */}
