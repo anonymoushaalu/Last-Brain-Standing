@@ -4,7 +4,7 @@
  */
 
 export type EntityType = 'rook' | 'zombie' | 'archer'
-export type ZombieType = 'basic' | 'fast' | 'tank'
+export type ZombieType = 'runner' | 'tank' | 'spitter' | 'horde'
 
 export interface Vector3 {
   x: number
@@ -70,34 +70,66 @@ export class Rook extends Entity {
 export class Zombie extends Entity {
   zombieType: ZombieType
   speed: number // units per tick
-  attackRange: number = 1.5
-  dps: number // damage per tick
+  attackRange: number
+  dps: number // damage per second
+  cost: number // infection points cost
+  isHordeMini: boolean = false // true if this is a mini zombie from a horde pack
 
   constructor(
     id: string,
-    zombieType: ZombieType = 'basic',
+    zombieType: ZombieType = 'runner',
     position: Vector3,
-    createdTick: number
+    createdTick: number,
+    isHordeMini: boolean = false
   ) {
-    let maxHp = 30
-    let speed = 0.5
-    let dps = 2
+    let maxHp = 35
+    let speed = 0.8
+    let dps = 8
+    let cost = 15
+    let attackRange = 1.5
 
     // Vary by zombie type
-    if (zombieType === 'fast') {
-      maxHp = 15
-      speed = 1.2
-      dps = 1.5
+    if (zombieType === 'runner') {
+      maxHp = 35
+      speed = 1.2 // very fast
+      dps = 8
+      cost = 15
+      attackRange = 1.5
     } else if (zombieType === 'tank') {
-      maxHp = 60
-      speed = 0.3
-      dps = 3
+      maxHp = 160
+      speed = 0.3 // slow
+      dps = 14
+      cost = 40
+      attackRange = 1.5
+    } else if (zombieType === 'spitter') {
+      maxHp = 55
+      speed = 0.6
+      dps = 12 // ranged damage
+      cost = 25
+      attackRange = 8 // ranged attacker
+    } else if (zombieType === 'horde') {
+      // Horde pack - treated as single unit for now
+      maxHp = 30
+      speed = 0.5
+      dps = 10 // combines 6 mini zombies
+      cost = 30
+      attackRange = 1.5
+    }
+
+    // Mini zombies from horde packs have reduced stats
+    if (isHordeMini) {
+      maxHp = Math.floor(maxHp * 0.5)
+      dps = Math.floor(dps * 0.5)
+      cost = 0 // no cost - spawned as part of horde
     }
 
     super(id, 'zombie', maxHp, position, createdTick)
     this.zombieType = zombieType
     this.speed = speed
     this.dps = dps
+    this.cost = cost
+    this.attackRange = attackRange
+    this.isHordeMini = isHordeMini
   }
 
   /**

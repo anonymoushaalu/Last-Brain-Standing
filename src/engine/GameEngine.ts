@@ -128,7 +128,7 @@ export class GameEngine {
   private spawnWave() {
     // Simple wave system: spawn zombies every 30 ticks for 5 waves
     if (this.currentTick % 30 === 0 && this.waveNumber < 5) {
-      const zombieCount = 3 + this.waveNumber * 2
+      const zombieCount = 5 + this.waveNumber * 3 // More zombies per wave
       for (let i = 0; i < zombieCount; i++) {
         // Spawn in a circle around the rook
         const angle = (i / zombieCount) * Math.PI * 2
@@ -136,11 +136,29 @@ export class GameEngine {
         const x = Math.cos(angle) * dist
         const z = Math.sin(angle) * dist
 
-        const types: ('basic' | 'fast' | 'tank')[] = ['basic', 'fast', 'tank']
+        // New types with varied distribution
+        const types: ('runner' | 'tank' | 'spitter' | 'horde')[] = [
+          'runner',
+          'runner',
+          'tank',
+          'spitter',
+          'horde',
+        ]
         const typeIndex = Math.floor(this.rng() * types.length)
 
         this.spawnZombie([x, 0, z], types[typeIndex])
         this.zombiesSpawned++
+
+        // Horde packs spawn 6 mini zombies
+        if (types[typeIndex] === 'horde') {
+          for (let h = 0; h < 6; h++) {
+            const hAngle = (h / 6) * Math.PI * 2
+            const hDist = 2 + this.rng() * 1
+            const hx = x + Math.cos(hAngle) * hDist
+            const hz = z + Math.sin(hAngle) * hDist
+            this.spawnZombie([hx, 0, hz], 'runner', true)
+          }
+        }
       }
 
       this.waveNumber++
@@ -149,9 +167,19 @@ export class GameEngine {
     }
   }
 
-  private spawnZombie(position: [number, number, number], type: 'basic' | 'fast' | 'tank') {
+  private spawnZombie(
+    position: [number, number, number],
+    type: 'runner' | 'tank' | 'spitter' | 'horde',
+    isHordeMini: boolean = false
+  ) {
     const id = `z-${this.zombies.length + 1}`
-    const zombie = new Zombie(id, type, { x: position[0], y: position[1], z: position[2] }, this.currentTick)
+    const zombie = new Zombie(
+      id,
+      type,
+      { x: position[0], y: position[1], z: position[2] },
+      this.currentTick,
+      isHordeMini
+    )
     this.zombies.push(zombie)
   }
 
@@ -198,5 +226,12 @@ export class GameEngine {
 
   getArchers(): Archer[] {
     return this.archers
+  }
+
+  get entities() {
+    const all: Array<Rook | Zombie | Archer> = []
+    if (this.rook) all.push(this.rook)
+    all.push(...this.zombies, ...this.archers)
+    return all
   }
 }
