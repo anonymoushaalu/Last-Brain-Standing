@@ -2,6 +2,8 @@ import { useFrame } from '@react-three/fiber'
 import { useRef, useState, useEffect } from 'react'
 import { Rook } from './Rook'
 import { ZombieRenderer } from './ZombieRenderer'
+import { ArcherVisuals } from './ArcherVisuals'
+import { ArrowRenderer } from './ArrowRenderer'
 import type { GameEngine } from '../engine/GameEngine'
 
 interface GameSceneProps {
@@ -76,6 +78,12 @@ export default function GameScene({ engine }: GameSceneProps) {
 
       {/* Zombie Renderer - InstancedMesh for all zombies */}
       <ZombieRenderer zombies={engine.entities.filter((e) => e.type === 'zombie')} />
+
+      {/* Archer Units */}
+      <ArcherVisuals archers={engine.getArchers()} />
+
+      {/* Arrow Projectiles */}
+      <ArrowRenderer arrows={engine.getArrows()} />
     </>
   )
 }

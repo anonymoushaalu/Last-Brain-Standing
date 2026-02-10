@@ -1,5 +1,16 @@
 import seedrandom from 'seedrandom'
-import { Rook, Zombie, Archer } from './entities'
+import { Rook, Zombie, Archer, Vector3 } from './entities'
+
+export interface Arrow {
+  id: string
+  origin: Vector3
+  target: Vector3
+  progress: number // 0 to 1
+  archerSet: string
+  targetId: string
+  damage: number
+  speed: number // units per second
+}
 
 export class GameEngine {
   private rng: () => number
@@ -14,11 +25,13 @@ export class GameEngine {
   private rook: Rook | null = null
   private zombies: Zombie[] = []
   private archers: Archer[] = []
+  private arrows: Arrow[] = []
 
   // Simulation configuration
   private waveNumber = 0
   private ticksToSpawn = 50
   private zombiesSpawned = 0
+  private arrowId = 0
 
   // Debug/logging
   private simulationLog: string[] = []
@@ -76,18 +89,51 @@ export class GameEngine {
       zombie.moveToward(this.rook!.position, () => this.rng())
     }
 
-    // Archer targeting and attacks
+    // Archer targeting and arrow firing
     for (const archer of this.archers) {
       const target = archer.acquireTarget(this.zombies)
       if (target && target.alive) {
-        // Only attack if in range and clear line of sight (simplified)
         const dist = archer.distanceTo(target.position)
         if (dist <= archer.range) {
-          target.takeDamage(archer.dps * this.dt)
+          // Fire an arrow (projectile) instead of instant damage
+          const arrow: Arrow = {
+            id: `arrow-${this.arrowId++}`,
+            origin: { ...archer.position },
+            target: { ...target.position },
+            progress: 0,
+            archerSet: archer.id,
+            targetId: target.id,
+            damage: archer.dps * this.dt,
+            speed: 30, // units per second
+          }
+          this.arrows.push(arrow)
+        }
+      }
+    }
+
+    // Update arrow positions and check for hits
+    for (let i = this.arrows.length - 1; i >= 0; i--) {
+      const arrow = this.arrows[i]
+      
+      // Move arrow toward target
+      const dx = arrow.target.x - arrow.origin.x
+      const dy = arrow.target.y - arrow.origin.y
+      const dz = arrow.target.z - arrow.origin.z
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
+      
+      arrow.progress += (arrow.speed * this.dt) / dist
+      
+      if (arrow.progress >= 1) {
+        // Arrow reached target, find zombie and deal damage
+        const target = this.zombies.find((z) => z.id === arrow.targetId)
+        if (target && target.alive) {
+          target.takeDamage(arrow.damage)
           this.log(
-            `[Tick ${this.currentTick}] Archer ${archer.id} hits ${target.id} for ${(archer.dps * this.dt).toFixed(1)} dmg`
+            `[Tick ${this.currentTick}] Arrow ${arrow.id} hits ${target.id} for ${arrow.damage.toFixed(1)} dmg`
           )
         }
+        // Remove arrow
+        this.arrows.splice(i, 1)
       }
     }
 
@@ -226,6 +272,10 @@ export class GameEngine {
 
   getArchers(): Archer[] {
     return this.archers
+  }
+
+  getArrows(): Arrow[] {
+    return this.arrows
   }
 
   get entities() {
