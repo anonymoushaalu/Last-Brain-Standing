@@ -87,7 +87,9 @@ export const LeaderboardUI: React.FC<LeaderboardUIProps> = ({ engine, postId = '
         <div>Brain Value: {brainValue}</div>
         <div>
           Fastest Collapse:{' '}
-          {fastestCollapse === Infinity ? 'Undefeated' : `${fastestCollapse.toFixed(1)}s`}
+          {fastestCollapse === Infinity || fastestCollapse === null || !isFinite(fastestCollapse)
+            ? 'Undefeated'
+            : `${fastestCollapse.toFixed(1)}s`}
         </div>
       </div>
 

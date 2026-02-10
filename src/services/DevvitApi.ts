@@ -38,7 +38,12 @@ export class DevvitApi {
     try {
       const stored = localStorage.getItem(this.storageKey)
       if (stored) {
-        return JSON.parse(stored)
+        const state = JSON.parse(stored)
+        // Handle Infinity being converted to null during JSON serialization
+        if (state.fastest_collapse === null) {
+          state.fastest_collapse = Infinity
+        }
+        return state
       }
     } catch (e) {
       console.warn('[DevvitApi] Failed to read rook state from storage:', e)
