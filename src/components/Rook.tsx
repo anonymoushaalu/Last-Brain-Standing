@@ -32,11 +32,11 @@ export function Rook({
   const getBaseColor = () => {
     switch (damageState) {
       case 'intact':
-        return '#6b4423'
+        return '#8B5A3C'
       case 'cracked':
-        return '#4a2f1a'
+        return '#5A3E2B'
       case 'heavily_damaged':
-        return '#2a1a0a'
+        return '#3D2817'
     }
   }
 
@@ -44,11 +44,11 @@ export function Rook({
   const getRoughness = () => {
     switch (damageState) {
       case 'intact':
-        return 0.7
+        return 0.6
       case 'cracked':
-        return 0.8
+        return 0.75
       case 'heavily_damaged':
-        return 0.9
+        return 0.85
     }
   }
 

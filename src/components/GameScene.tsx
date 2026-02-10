@@ -44,12 +44,12 @@ export default function GameScene({ engine }: GameSceneProps) {
 
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={0.5} color="#ffffff" />
+      {/* Lighting - Enhanced contrast */}
+      <ambientLight intensity={0.35} color="#ffffff" />
       <directionalLight
         ref={lightRef}
-        position={[40, 40, 40]}
-        intensity={1.2}
+        position={[40, 50, 40]}
+        intensity={1.5}
         color="#ffffff"
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -61,14 +61,22 @@ export default function GameScene({ engine }: GameSceneProps) {
         castShadow
       />
 
-      {/* Ground Plane */}
+      {/* Rim light for depth */}
+      <directionalLight
+        position={[-30, 30, -40]}
+        intensity={0.4}
+        color="#4CAF50"
+        castShadow={false}
+      />
+
+      {/* Ground Plane - Darker for better contrast */}
       <mesh position={[0, -0.5, 0]} receiveShadow>
         <planeGeometry args={[100, 100]} />
-        <meshStandardMaterial color="#2a5d3a" metalness={0.1} roughness={0.8} />
+        <meshStandardMaterial color="#1a3d26" metalness={0.05} roughness={0.9} />
       </mesh>
 
       {/* Grid for visual reference */}
-      <gridHelper args={[100, 20, '#444444', '#222222']} position={[0, 0, 0]} />
+      <gridHelper args={[100, 20, '#2a5d3f', '#1a3d26']} position={[0, 0, 0]} />
 
       {/* Hero Rook with Brain */}
       <Rook

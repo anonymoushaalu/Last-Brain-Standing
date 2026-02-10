@@ -8,10 +8,10 @@ interface ZombieRendererProps {
 }
 
 const ZOMBIE_COLOR_MAP: Record<string, string> = {
-  runner: '#4CAF50', // Green
-  tank: '#FF9800', // Orange
-  spitter: '#9C27B0', // Purple
-  horde: '#2196F3', // Blue
+  runner: '#7FD300', // Bright lime green
+  tank: '#FF6B00', // Bright orange
+  spitter: '#C700FF', // Bright magenta
+  horde: '#00B4D8', // Bright cyan
 }
 
 type InstancedMeshMap = Record<string, THREE.InstancedMesh | null>
@@ -45,10 +45,10 @@ export const ZombieRenderer: React.FC<ZombieRendererProps> = ({ zombies }) => {
       if (!instancedMeshesRef.current[type]) {
         const material = new THREE.MeshStandardMaterial({
           color: ZOMBIE_COLOR_MAP[type],
-          metalness: 0.3,
-          roughness: 0.7,
+          metalness: 0.5,
+          roughness: 0.4,
           emissive: ZOMBIE_COLOR_MAP[type],
-          emissiveIntensity: 0.2,
+          emissiveIntensity: 0.3,
         })
         const mesh = new THREE.InstancedMesh(geometries[type], material, 256) // Max 256 per type
         mesh.castShadow = true

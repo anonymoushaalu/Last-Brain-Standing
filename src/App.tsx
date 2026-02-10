@@ -5,6 +5,7 @@ import { FPSMonitor } from './components/FPSMonitor'
 import { StatusDisplay } from './components/StatusDisplay'
 import { AttackerUI } from './components/AttackerUI'
 import { ReplayButton } from './components/ReplayButton'
+import { LeaderboardUI } from './components/LeaderboardUI'
 import { GameEngine } from './engine/GameEngine'
 import { testDeterministicSimulation } from './engine/test'
 
@@ -61,7 +62,8 @@ export default function App() {
       <StatusDisplay engine={gameEngine} />
       <AttackerUI />
       <ReplayButton engine={gameEngine} />
-      <div style={{position: 'fixed', bottom: 12, left: 12, color: '#fff', fontFamily: 'sans-serif', background: 'rgba(0,0,0,0.4)', padding: '6px 8px', borderRadius: 4}}>Scene running — if canvas is blank, check browser console.</div>
+      <LeaderboardUI engine={gameEngine} postId="rook-0" />
+      <div style={{position: 'fixed', bottom: 12, left: 12, color: '#fff', fontFamily: 'sans-serif', background: 'rgba(0,0,0,0.4)', padding: '6px 8px', borderRadius: 4}}>Last Brain Standing</div>
     </div>
   )
 }

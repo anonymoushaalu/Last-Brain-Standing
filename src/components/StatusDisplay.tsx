@@ -31,16 +31,18 @@ export function StatusDisplay({ engine }: StatusDisplayProps) {
       position: 'fixed',
       top: 10,
       right: 10,
-      color: '#00ff00',
+      color: '#FF6B35',
       fontFamily: 'monospace',
       fontSize: 12,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      backgroundColor: 'rgba(0, 0, 0, 0.9)',
       padding: '10px 15px',
       borderRadius: 4,
       zIndex: 100,
-      border: '1px solid #00ff00',
+      border: '1px solid #FF6B35',
       maxWidth: 360,
-      pointerEvents: 'none'
+      pointerEvents: 'none',
+      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.5)',
+      backdropFilter: 'blur(4px)',
     }}>
       <div><strong>🎮 STATUS</strong></div>
       <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.4 }}>

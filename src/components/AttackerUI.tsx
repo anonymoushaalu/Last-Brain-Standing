@@ -48,7 +48,7 @@ export const AttackerUI: React.FC = () => {
         position: 'fixed',
         bottom: 20,
         left: 20,
-        background: 'rgba(0, 0, 0, 0.8)',
+        background: 'rgba(0, 0, 0, 0.9)',
         border: '2px solid #FF6B35',
         borderRadius: 8,
         padding: '16px',
@@ -56,8 +56,9 @@ export const AttackerUI: React.FC = () => {
         color: '#fff',
         minWidth: '280px',
         maxWidth: '350px',
-        backdropFilter: 'blur(4px)',
+        backdropFilter: 'blur(8px)',
         zIndex: 50,
+        boxShadow: '0 4px 20px rgba(255, 107, 53, 0.2)',
       }}
     >
       <div
