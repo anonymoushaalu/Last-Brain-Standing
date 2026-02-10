@@ -55,13 +55,15 @@ export function Rook({
   // Pulsing animation
   useFrame(({ clock }) => {
     if (brainRef.current) {
-      // Pulse scale
-      const pulse = 0.95 + 0.05 * Math.sin(clock.elapsedTime * 3)
+      // Pulse speed increases as health drops (faster pulse = more panic)
+      const healthPercent = currentHealth / maxHealth
+      const pulseSpeed = 2 + (1 - healthPercent) * 2 // 2-4 Hz based on health
+      const pulse = 0.95 + 0.05 * Math.sin(clock.elapsedTime * pulseSpeed)
       brainRef.current.scale.set(pulse, pulse, pulse)
 
       // Pulse emissive intensity
       if (brainRef.current.material instanceof THREE.MeshStandardMaterial) {
-        const emissiveIntensity = 0.5 + 0.5 * Math.sin(clock.elapsedTime * 2.5)
+        const emissiveIntensity = 0.5 + 0.5 * Math.sin(clock.elapsedTime * (pulseSpeed - 0.5))
         brainRef.current.material.emissiveIntensity = emissiveIntensity
       }
     }

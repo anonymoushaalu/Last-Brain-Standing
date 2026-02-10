@@ -4,6 +4,8 @@ import { Rook } from './Rook'
 import { ZombieRenderer } from './ZombieRenderer'
 import { ArcherVisuals } from './ArcherVisuals'
 import { ArrowRenderer } from './ArrowRenderer'
+import { DamageNumbers } from './DamageNumbers'
+import { ScreenShake } from './ScreenShake'
 import type { GameEngine } from '../engine/GameEngine'
 
 interface GameSceneProps {
@@ -84,6 +86,12 @@ export default function GameScene({ engine }: GameSceneProps) {
 
       {/* Arrow Projectiles */}
       <ArrowRenderer arrows={engine.getArrows()} />
+
+      {/* Damage Numbers (floating text) */}
+      <DamageNumbers damageEvents={engine.getDamageEvents()} />
+
+      {/* Screen Shake Effect */}
+      <ScreenShake engine={engine} />
     </>
   )
 }
